@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEditor.Networking.PlayerConnection;
 using UnityEditor.Timeline;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -41,60 +43,48 @@ public class GameManager : MonoBehaviour
         Debug.Log(debugText);
     }
 
-    //void PrintArray()
-    //{
-    //    string debugText = "";
-    //    for (int i = 0; i < map.Length; i++)
-    //    {
-    //        debugText += map[i].ToString() + ",";
-    //    }
-    //    Debug.Log(debugText);
-    //}
 
-    //Vector2Int GetPlayerIndex()
-    //{
-    //    for (int y = 0; y < field.GetLength(0); y++)
-    //    {
-    //        for (int x = 0; x < field.GetLength(1); x++)
-    //        {
-    //            if (map[y, x] == 1)
-    //            {
-    //                return 
-    //            }
+    Vector2Int GetPlayerIndex()
+    {
+        for (int y = 0; y < field.GetLength(0); y++)
+        {
+            for (int x = 0; x < field.GetLength(1); x++)
+            {
+                if (field[y, x] == null) { continue; }
+                if (field[y, x].tag == "Player")
+                {
+                    return new Vector2Int(x, y);
+                }
 
-    //        }
-    //    }
-    //   return 
-    //}
+            }
+        }
+        return new Vector2Int(-1, -1);
+    }
 
-    //bool MoveNumber(int number, int moveFrom, int moveTo)
-    //{
-    //    //移動先が範囲外なら移動不可
-    //    if (moveTo < 0 || moveTo >= map.Length) { return false; }
-    //    //移動先に2(箱)がいたら
-    //    if (map[moveTo] == 2)
-    //    {
-    //        //どの方向に移動するか
-    //        int velocity = moveTo - moveFrom;
-    //        //プレイヤーの移動先から、さらに先へ2(箱)を移動させる
-    //        bool success = MoveNumber(2, moveTo, moveTo + velocity);
-    //        //もし箱が移動失敗したら、プレイヤーの移動も不可
-    //        if (!success) { return false; }
-    //    }
-    //    //プレイヤーと箱の移動処理
-    //    map[moveTo] = number;
-    //    map[moveFrom] = 0;
-    //    return true;
-    //}
+    bool MoveNumber(string tag, Vector2Int moveFrom, Vector2Int moveTo)
+    {
+        //移動先が範囲外なら移動不可
+        if (moveTo.y < 0 || moveTo.y >= field.GetLength(0)) { return false; }
+        if (moveTo.x < 0 || moveTo.x >= field.GetLength(1)) { return false; }
+        //移動先に2(箱)がいたら
+        if (field[moveTo.y, moveTo.x] != null && field[moveTo.y,moveTo.x].tag=="Box" )
+        {
+            //どの方向に移動するか
+            Vector2Int velocity = moveTo - moveFrom;
+            //プレイヤーの移動先から、さらに先へ2(箱)を移動させる
+            bool success = MoveNumber(tag, moveTo, moveTo + velocity);
+            //もし箱が移動失敗したら、プレイヤーの移動も不可
+            if (!success) { return false; }
+        }
+        //プレイヤーと箱の移動処理
+        field[moveFrom.y, moveTo.x].transform.position =
+            new Vector3(moveTo.x, field.GetLength(0) - moveTo.y, 0);
+        field[moveTo.y, moveTo.x] = field[moveTo.y,moveTo.x];
+        field[moveFrom.y, moveFrom.x] = null;
+        return true;
+    }
 
-    //// Start is called before the first frame update
-    //void Start()
-    //{
-    //    map = new int[] { 0, 2, 0, 1, 0, 2, 0, 2, 0 };
-    //    PrintArray();
-    //}
-
-    //// Update is called once per frame
+    // Update is called once per frame
     //void Update()
     //{
     //    //十字キー右で右に一個ずれる
